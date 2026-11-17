@@ -19,6 +19,10 @@ Grafica e funzioni sono le stesse dei siti delle altre UdR (base: UdR 11).
   *Domenica e festivi*.
 - **Giorno**: si sceglie una data; prima dell'avvio del servizio (30/11/2026) si apre sul primo giorno.
 - **Mappa**, **quadro orario**, **Vicino a me** e **Bus in viaggio** come negli altri siti.
+- **Corse preferite**: cliccando il numero di una corsa nel quadro orario compare «☆ Aggiungi ai preferiti»; le corse
+  salvate sono in cima all'elenco («★ Le mie corse»), con il tempo reale se sono in viaggio, e si aprono con un clic.
+  Restano nel browser di chi usa il sito (nessun account, non passano da un dispositivo all'altro); con un GTFS nuovo
+  che rinumera le corse si ritrovano per linea, direzione e orario di partenza.
 - **Tempo reale** (solo per il giorno di oggi, sul sito online): dal proxy (`REALTIME`; codice nel repository UDR11,
   cartella `proxy-realtime/`) ritardi, prossima fermata evidenziata e bus «In arrivo» alle fermate, abbinati col
   `trip_id` del GTFS. Nel proxy (Cloudflare) `AGENCY_ID` deve comprendere l'agenzia dell'UdR 4 (nel GTFS
