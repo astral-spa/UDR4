@@ -14,9 +14,14 @@ Grafica e funzioni sono le stesse dei siti delle altre UdR (base: UdR 11).
 - **Nome delle linee**: il GTFS non lo indica, per cui si ricava dai capolinea del percorso più frequente
   («Piazza Giuseppe Mazzini – Corso Giacomo Matteotti»); per le circolari, capolinea e fermata più lontana
   («Circolare P.zza Garibaldi – Via dei Fienili»). Con nomi di fermata definitivi nel GTFS cambiano da soli.
-- **Calendari**: quelli del GTFS (`calendar.txt`) con le eccezioni di `calendar_dates.txt` (festività e vacanze
-  scolastiche). Etichette in `ETICHETTE`: *Scolastico lunedì–venerdì*, *Scolastico lunedì–sabato*, *Non scolastico*,
-  *Domenica e festivi*.
+- **Calendari**: quelli del GTFS (`calendar.txt` con le eccezioni di `calendar_dates.txt`), **combinati per giorno**.
+  Nel GTFS dell'UdR 4 nello stesso giorno valgono più servizi (un lunedì di scuola: *Scolastico lunedì–sabato* e
+  *Scolastico lunedì–venerdì*) e tutte le corse hanno la stessa direzione, per cui le corse di un giorno sarebbero
+  finite in schede diverse. Ogni gruppo di giorni con gli stessi servizi attivi diventa quindi un solo calendario con
+  tutte le sue corse in un unico quadro: **Scolastico lunedì–venerdì** (giorni di scuola), **Sabato e vacanze
+  scolastiche** (sabati e giorni feriali senza scuola), **Domenica e festivi** (`COMBINA_CALENDARI` ed
+  `ETICHETTE_COMBINATE` in testa a `build_data.py`). Una corsa può così comparire in più calendari, uno per gruppo
+  di giorni; nei conteggi dei percorsi vale una volta sola.
 - **Giorno**: si sceglie una data; prima dell'avvio del servizio (30/11/2026) si apre sul primo giorno.
 - **Mappa**, **quadro orario**, **Vicino a me** e **Bus in viaggio** come negli altri siti.
 - **Corse preferite**: cliccando il numero di una corsa nel quadro orario compare «☆ Aggiungi ai preferiti»; le corse

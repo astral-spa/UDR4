@@ -41,6 +41,18 @@ ETICHETTE = {
     "udr4_NONSCOL": "Non scolastico",
     "udr4_DOMFEST": "Domenica e festivi",
 }
+# nel GTFS dell'UdR 4 nello stesso giorno valgono più calendari (es. lunedì scolastico: SCOLLUSA e SCOLLUVE),
+# e tutte le corse hanno direction_id 0: le corse di un giorno finirebbero in schede diverse. Si combinano allora
+# i calendari per giorno: ogni gruppo di giorni con gli stessi servizi attivi diventa un unico calendario, con
+# tutte le corse di quei giorni in un solo quadro. Etichette delle combinazioni (le altre: etichette unite con «+»)
+COMBINA_CALENDARI = True
+ETICHETTE_COMBINATE = {
+    ("udr4_SCOLLUSA", "udr4_SCOLLUVE"): "Scolastico lunedì–venerdì",
+    ("udr4_NONSCOL", "udr4_SCOLLUSA"): "Sabato e vacanze scolastiche",
+    ("udr4_DOMFEST",): "Domenica e festivi",
+    ("udr4_SCOLLUSA",): "Scolastico lunedì–sabato",
+    ("udr4_NONSCOL",): "Non scolastico",
+}
 
 # comune delle linee (route_long_name del GTFS) con la grafia ufficiale
 AREE_NOMI = {
@@ -276,6 +288,43 @@ def ymd(d):
     return d.strftime("%Y%m%d")
 
 
+def combina_calendari(servizi, trips, inizio, fine):
+    """Un calendario per ogni gruppo di giorni con gli stessi servizi attivi; ogni corsa va nei calendari
+    combinati che comprendono il suo servizio (una corsa può quindi stare in più quadri, uno per gruppo)."""
+    con_corse = {t["service_id"] for t in trips}
+    per_giorno = defaultdict(set)
+    for svc, v in servizi.items():
+        if svc in con_corse:
+            for g in v["date"]:
+                per_giorno[g].add(svc)
+    gruppi = defaultdict(list)
+    for g, ss in per_giorno.items():
+        gruppi[tuple(sorted(ss))].append(g)
+    nuovi, di = {}, defaultdict(list)
+    for chiave, ds in gruppi.items():
+        ds = sorted(ds)
+        cid = "+".join(chiave)
+        wd = {datetime.date(int(g[:4]), int(g[4:6]), int(g[6:])).weekday() for g in ds}
+        # giorni esclusi: quelli del periodo, nei giorni della settimana del calendario, in cui non vale
+        tutti, d = [], datetime.date(int(ds[0][:4]), int(ds[0][4:6]), int(ds[0][6:]))
+        fine_d = datetime.date(int(ds[-1][:4]), int(ds[-1][4:6]), int(ds[-1][6:]))
+        presenti = set(ds)
+        while d <= fine_d:
+            if d.weekday() in wd and ymd(d) not in presenti and len(wd) < 7 and len(presenti) > len(wd) * 4:
+                tutti.append(ymd(d))
+            d += datetime.timedelta(days=1)
+        etichetta = ETICHETTE_COMBINATE.get(chiave) or " + ".join(servizi[s]["label"] for s in chiave)
+        nuovi[cid] = {"label": etichetta, "dal": ds[0], "al": ds[-1], "esclusi": tutti if len(tutti) <= 30 else [],
+                      "date": ds, "giorni": len(ds), "scol": any("SCOL" in s and "NONSCOL" not in s for s in chiave)}
+        for s in chiave:
+            di[s].append(cid)
+    nuove_corse = []
+    for t in trips:
+        for cid in di.get(t["service_id"], []):
+            nuove_corse.append({**t, "service_id": cid})
+    return nuovi, nuove_corse
+
+
 def build(zpath, inizio="00000000", fine="99999999"):
     """Dati del sito per un GTFS, con i calendari limitati al periodo inizio–fine (inclusi)."""
     zf = zipfile.ZipFile(zpath)
@@ -320,7 +369,9 @@ def build(zpath, inizio="00000000", fine="99999999"):
         esclusi = sorted(g for g, tipo in eccezioni[svc].items() if tipo == "2" and inizio <= g <= fine)
         servizi[svc] = {"label": ETICHETTE.get(svc) or service_label(wd), "dal": ds[0], "al": ds[-1], "esclusi": esclusi,
                         "date": ds, "giorni": len(ds), "scol": "SCL" in svc}
-    ordine = list(ETICHETTE)
+    if COMBINA_CALENDARI:
+        servizi, trips = combina_calendari(servizi, trips, inizio, fine)
+    ordine = list(ETICHETTE) + ["+".join(k) for k in ETICHETTE_COMBINATE]
     used_svc = sorted((s for s in servizi if any(t["service_id"] == s for t in trips)),
                       key=lambda s: (ordine.index(s) if s in ordine else len(ordine), s))
     servizi = {s: servizi[s] for s in used_svc}
