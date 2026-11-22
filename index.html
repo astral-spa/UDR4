@@ -1345,8 +1345,10 @@ function renderLine() {
 
   const PV = percorsiOf(l), pv = Object.fromEntries(PV.map(v => [v.id, v]));
   // percorso selezionato in questa direzione: si vedono solo le fermate servite dalle sue corse
-  const filtroPerc = state.variant && pv[state.variant] && pv[state.variant].dir === t.dir && t.corse.some(c => c.shape === state.variant);
-  const servite = filtroPerc ? new Set(t.fermate.map((s, i) => i).filter(i => t.corse.some(c => c.shape === state.variant && c.o[i] != null))) : null;
+  const inDir = state.variant && pv[state.variant] && pv[state.variant].dir === t.dir && t.corse.some(c => c.shape === state.variant);
+  const servite0 = inDir ? new Set(t.fermate.map((s, i) => i).filter(i => t.corse.some(c => c.shape === state.variant && c.o[i] != null))) : null;
+  const filtroPerc = !!servite0 && servite0.size < t.fermate.length;  // niente da nascondere se il percorso passa da tutte le fermate
+  const servite = filtroPerc ? servite0 : null;
   const rows = t.fermate.map((s, i) => ({ s, i }))
     .filter(r => !servite || servite.has(r.i))
     .filter(r => !state.onlyMain || t.princ[r.i] || nextRows.has(r.i));
