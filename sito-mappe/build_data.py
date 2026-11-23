@@ -431,7 +431,10 @@ def build(zpath, inizio="00000000", fine="99999999"):
     aree = {}
     for r in routes:
         nome = r.get("route_long_name", "").strip()
-        if nome:
+        if nome.lower() == "intercomunale" and passaggi.get(r["route_id"]):
+            # linea intercomunale: compare in ogni comune che attraversa (il primo è quello con più passaggi)
+            aree[r["route_id"]] = [c for c, _ in passaggi[r["route_id"]].most_common()]
+        elif nome:
             area[r["route_id"]] = AREE_NOMI.get(nome, nome)
     routes = sorted(routes, key=lambda r: natural(numero(r["route_short_name"])))
     colors = line_colors(len(routes))
