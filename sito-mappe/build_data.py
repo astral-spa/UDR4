@@ -67,6 +67,9 @@ NOMI_COMUNI = {
     "Lanuvio", "Lariano", "Marino", "Monte Porzio Catone", "Monte Compatri", "Nemi", "Rocca di Papa", "Velletri",
     "Colonna", "Rocca Priora", "Roma", "Aprilia", "Ardea", "Pomezia",
 }
+# comuni che non compaiono nell'elenco delle linee né nel filtro Zone: le fermate restano col loro comune,
+# ma le linee che li attraversano non vengono catalogate sotto di essi
+COMUNI_ESCLUSI = {"Aprilia"}
 # frazioni (scritte nei nomi delle fermate) -> comune
 FRAZIONI = {
     "Cecchina": "Albano Laziale", "Pavona": "Albano Laziale", "Santa Maria delle Mole": "Marino",
@@ -427,13 +430,13 @@ def build(zpath, inizio="00000000", fine="99999999"):
             if com:
                 passaggi[t["route_id"]][com] += 1
     # il comune della linea è in route_long_name ("Genzano" -> Genzano di Roma); se manca, quello con più passaggi
-    area = {rid: c.most_common(1)[0][0] for rid, c in passaggi.items()}
+    area = {rid: next((x for x, _ in c.most_common() if x not in COMUNI_ESCLUSI), "") for rid, c in passaggi.items()}
     aree = {}
     for r in routes:
         nome = r.get("route_long_name", "").strip()
         if nome.lower() == "intercomunale" and passaggi.get(r["route_id"]):
             # linea intercomunale: compare in ogni comune che attraversa (il primo è quello con più passaggi)
-            aree[r["route_id"]] = [c for c, _ in passaggi[r["route_id"]].most_common()]
+            aree[r["route_id"]] = [c for c, _ in passaggi[r["route_id"]].most_common() if c not in COMUNI_ESCLUSI]
         elif nome:
             area[r["route_id"]] = AREE_NOMI.get(nome, nome)
     routes = sorted(routes, key=lambda r: natural(numero(r["route_short_name"])))

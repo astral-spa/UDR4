@@ -11,6 +11,8 @@ Grafica e funzioni sono le stesse dei siti delle altre UdR (base: UdR 11).
   Genzano di Roma, «Montecompatri» → Monte Compatri, «Rocca Di Papa» → Rocca di Papa, «Intercomunale» → Linee
   intercomunali; `AREE_NOMI` in testa a `build_data.py`). Il numero della linea è il codice senza la sigla del comune
   (`Albn1_sc_m` → **1 sc m**, `CmpnS_2B` → **S 2B**; le intercomunali `LA…` restano intere, `SIGLE_LINEA`).
+  I comuni in `COMUNI_ESCLUSI` (oggi Aprilia) non sono usati come comune delle linee: non compaiono nell'elenco né
+  nel filtro Zone, ma le loro fermate restano sulla mappa con il proprio comune.
 - **Nome delle linee**: il GTFS non lo indica, per cui si ricava dai capolinea del percorso più frequente
   («Piazza Giuseppe Mazzini – Corso Giacomo Matteotti»); per le circolari, capolinea e fermata più lontana
   («Circolare P.zza Garibaldi – Via dei Fienili»). Con nomi di fermata definitivi nel GTFS cambiano da soli.
