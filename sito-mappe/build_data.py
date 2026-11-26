@@ -70,6 +70,13 @@ NOMI_COMUNI = {
 # comuni che non compaiono nell'elenco delle linee né nel filtro Zone: le fermate restano col loro comune,
 # ma le linee che li attraversano non vengono catalogate sotto di essi
 COMUNI_ESCLUSI = {"Aprilia"}
+# varianti di percorso (shape_id del GTFS) che compaiono anche come linea a sé in un altro comune: le corse con quel
+# percorso restano nella linea di origine e si ripetono, con lo stesso trip_id, nella linea indicata qui (codice
+# completo, da cui il numero mostrato: "Frsc1S" -> 1S, diverso dalla linea 1 del comune), con il colore della linea
+# di origine
+LINEE_VARIANTI = {
+    "udr4-Frsc1S": {"id": "Frsc1S", "comune": "Monte Porzio Catone"},  # linea 1 di Frascati, variante B
+}
 # frazioni (scritte nei nomi delle fermate) -> comune
 FRAZIONI = {
     "Cecchina": "Albano Laziale", "Pavona": "Albano Laziale", "Santa Maria delle Mole": "Marino",
@@ -422,6 +429,18 @@ def build(zpath, inizio="00000000", fine="99999999"):
         for r in st_by_trip[t["trip_id"]]:
             route_lines[r["stop_id"]].add(t["route_id"])
 
+    # linee ricavate da una variante di percorso (LINEE_VARIANTI): dopo route_lines, perché la variante non conti
+    # come un'altra linea nei nodi di interscambio
+    origine = {}
+    for shape, v in LINEE_VARIANTI.items():
+        vt = [t for t in trips if t["shape_id"] == shape]
+        if vt:
+            trips = trips + [{**t, "route_id": v["id"]} for t in vt]
+            padre = next((r for r in routes if r["route_id"] == vt[0]["route_id"]), {})
+            routes = routes + [{"route_id": v["id"], "route_short_name": v["id"], "route_long_name": v["comune"],
+                                "route_color": padre.get("route_color", "")}]
+            origine[v["id"]] = vt[0]["route_id"]
+
     # comune principale di ogni linea (quello con più passaggi) e comuni serviti
     passaggi = defaultdict(Counter)
     for t in trips:
@@ -440,7 +459,9 @@ def build(zpath, inizio="00000000", fine="99999999"):
         elif nome:
             area[r["route_id"]] = AREE_NOMI.get(nome, nome)
     routes = sorted(routes, key=lambda r: natural(numero(r["route_short_name"])))
-    colors = line_colors(len(routes))
+    # colori in ordine di linea, senza contare le linee delle varianti, che prendono quello della linea di origine
+    reali = [r["route_id"] for r in routes if r["route_id"] not in origine]
+    colors = dict(zip(reali, line_colors(len(reali))))
     linee = []
     for ri, r in enumerate(routes):
         rtrips = [t for t in trips if t["route_id"] == r["route_id"]]
@@ -456,7 +477,7 @@ def build(zpath, inizio="00000000", fine="99999999"):
         shp = sorted({t["shape_id"] for t in rtrips})
         linee.append({
             "id": r["route_short_name"], "n": numero(r["route_short_name"]), "nome": nome_linea(rtrips, st_by_trip, stops),
-            "area": area.get(r["route_id"], ""), **({"aree": aree[r["route_id"]]} if r["route_id"] in aree else {}), "comuni": sorted(passaggi[r["route_id"]]), "col": "#" + color.upper() if color else colors[ri],
+            "area": area.get(r["route_id"], ""), **({"aree": aree[r["route_id"]]} if r["route_id"] in aree else {}), "comuni": sorted(passaggi[r["route_id"]]), "col": "#" + color.upper() if color else colors[origine.get(r["route_id"], r["route_id"])],
             "shapes": shp, "km": max(shape_km[s] for s in shp), "tab": tabs,
         })
 
