@@ -13,6 +13,10 @@ Grafica e funzioni sono le stesse dei siti delle altre UdR (base: UdR 11).
   (`Albn1_sc_m` → **1 sc m**, `CmpnS_2B` → **S 2B**; le intercomunali `LA…` restano intere, `SIGLE_LINEA`).
   I comuni in `COMUNI_ESCLUSI` (oggi Aprilia) non sono usati come comune delle linee: non compaiono nell'elenco né
   nel filtro Zone, ma le loro fermate restano sulla mappa con il proprio comune.
+- **Varianti come linea a sé** (`LINEE_VARIANTI`): le corse di un percorso (`shape_id`) di una linea compaiono anche
+  come linea separata in un altro comune, restando anche nella linea di origine e con il suo colore. Oggi la
+  variante B della linea 1 di Frascati (`udr4-Frsc1S`, da Piazza Borghese) è anche la linea **1S** di Monte Porzio
+  Catone (1S e non 1, che a Monte Porzio Catone esiste già).
 - **Nome delle linee**: il GTFS non lo indica, per cui si ricava dai capolinea del percorso più frequente
   («Piazza Giuseppe Mazzini – Corso Giacomo Matteotti»); per le circolari, capolinea e fermata più lontana
   («Circolare P.zza Garibaldi – Via dei Fienili»). Con nomi di fermata definitivi nel GTFS cambiano da soli.
